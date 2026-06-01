@@ -3,9 +3,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import 'l10n/app_localizations.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
 import 'ui/home_page.dart';
@@ -176,40 +178,59 @@ class _GradeCalcAppState extends State<GradeCalcApp>
     return AppStateScope(
       state: _state,
       child: ValueListenableBuilder<int>(
-        valueListenable: _state.themeChanges,
+        valueListenable: _state.languageChanges,
         builder: (context, _, child) {
-          final themeChoice =
-              AppThemes.choices[_displayedThemeIndex.clamp(
-                0,
-                AppThemes.choices.length - 1,
-              )];
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'GradeCalcDZ',
-            themeAnimationDuration: Duration.zero,
-            themeAnimationCurve: Curves.linear,
-            scrollBehavior: const _NoGlowScrollBehavior(),
-            theme: themeChoice.data,
-            builder: (context, child) {
-              final themedChild = RepaintBoundary(
-                key: _repaintKey,
-                child: Theme(
-                  data: themeChoice.data,
-                  child: child ?? const SizedBox.shrink(),
-                ),
-              );
-              return ThemeCircularRevealHost(
-                revealKey: _displayedRevealKey,
-                revealOrigin: _displayedRevealOrigin,
-                previousFrameImage: _previousFrameImage,
-                previousFrameScale: _previousFrameScale,
-                onRevealComplete: _onRevealComplete,
-                child: themedChild,
-              );
-            },
-            home: AnimatedBuilder(
-              animation: _state,
-              builder: (context, _) => _buildHome(),
+          final text = AppText(_state.language);
+          return AppTextScope(
+            text: text,
+            child: ValueListenableBuilder<int>(
+              valueListenable: _state.themeChanges,
+              builder: (context, _, child) {
+                final themeChoice =
+                    AppThemes.choices[_displayedThemeIndex.clamp(
+                      0,
+                      AppThemes.choices.length - 1,
+                    )];
+                return MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  title: text.appName,
+                  locale: text.appLanguage.locale,
+                  supportedLocales: AppText.supportedLocales,
+                  localizationsDelegates: const [
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                  ],
+                  themeAnimationDuration: Duration.zero,
+                  themeAnimationCurve: Curves.linear,
+                  scrollBehavior: const _NoGlowScrollBehavior(),
+                  theme: themeChoice.data,
+                  builder: (context, child) {
+                    final themedChild = Directionality(
+                      textDirection: text.direction,
+                      child: RepaintBoundary(
+                        key: _repaintKey,
+                        child: Theme(
+                          data: themeChoice.data,
+                          child: child ?? const SizedBox.shrink(),
+                        ),
+                      ),
+                    );
+                    return ThemeCircularRevealHost(
+                      revealKey: _displayedRevealKey,
+                      revealOrigin: _displayedRevealOrigin,
+                      previousFrameImage: _previousFrameImage,
+                      previousFrameScale: _previousFrameScale,
+                      onRevealComplete: _onRevealComplete,
+                      child: themedChild,
+                    );
+                  },
+                  home: AnimatedBuilder(
+                    animation: _state,
+                    builder: (context, _) => _buildHome(),
+                  ),
+                );
+              },
             ),
           );
         },

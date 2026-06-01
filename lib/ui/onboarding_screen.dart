@@ -90,120 +90,235 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             colors: [tokens.bgTop, tokens.bgBottom],
           ),
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: _currentPage == 0
-                          ? null
-                          : () => _pageController.previousPage(
-                              duration: const Duration(milliseconds: 280),
-                              curve: Curves.easeOutCubic,
-                            ),
-                      icon: const Icon(Icons.arrow_back_rounded),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: widget.onComplete,
-                      child: Text(
-                        'Skip',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: tokens.accentAlt,
-                          fontWeight: FontWeight.w600,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _PaperTexturePainter(
+                  color: theme.colorScheme.onSurface.withValues(
+                    alpha: theme.brightness == Brightness.dark ? 0.05 : 0.08,
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: _currentPage == 0
+                              ? null
+                              : () => _pageController.previousPage(
+                                  duration: const Duration(milliseconds: 280),
+                                  curve: Curves.easeOutCubic,
+                                ),
+                          icon: const Icon(Icons.arrow_back_rounded),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _pages.length,
-                  onPageChanged: (index) =>
-                      setState(() => _currentPage = index),
-                  itemBuilder: (context, index) {
-                    return _OnboardingPage(
-                      data: _pages[index],
-                      isActive: index == _currentPage,
-                      floatAnimation: _floatController,
-                    );
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_pages.length, (index) {
-                        final selected = index == _currentPage;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 260),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: selected ? 34 : 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? tokens.accentAlt
-                                : tokens.accentAlt.withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: selected
-                                ? [
-                                    BoxShadow(
-                                      color: tokens.accentAlt.withValues(
-                                        alpha: 0.45,
-                                      ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ]
-                                : null,
+                        const Spacer(),
+                        TextButton(
+                          onPressed: widget.onComplete,
+                          child: Text(
+                            'Skip',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: tokens.accentAlt,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _pages.length,
+                      allowImplicitScrolling: true,
+                      onPageChanged: (index) =>
+                          setState(() => _currentPage = index),
+                      itemBuilder: (context, index) {
+                        return _OnboardingPage(
+                          data: _pages[index],
+                          isActive: index == _currentPage,
+                          floatAnimation: _floatController,
                         );
-                      }),
+                      },
                     ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 62,
-                      child: FilledButton(
-                        onPressed: _next,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: tokens.accentAlt,
-                          foregroundColor: const Color(0xFF081122),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                        child: Row(
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
+                    child: Column(
+                      children: [
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _pages[_currentPage].cta,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF081122),
+                          children: List.generate(_pages.length, (index) {
+                            final selected = index == _currentPage;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 260),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: selected ? 34 : 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? tokens.accentAlt
+                                    : tokens.accentAlt.withValues(alpha: 0.35),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                ),
+                                boxShadow: selected
+                                    ? [
+                                        BoxShadow(
+                                          color: tokens.accentAlt.withValues(
+                                            alpha: 0.32,
+                                          ),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : null,
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Icon(Icons.arrow_forward_rounded),
-                          ],
+                            );
+                          }),
                         ),
-                      ),
+                        const SizedBox(height: 18),
+                        _PaperPrimaryButton(
+                          label: _pages[_currentPage].cta,
+                          onPressed: _next,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaperPrimaryButton extends StatefulWidget {
+  const _PaperPrimaryButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  State<_PaperPrimaryButton> createState() => _PaperPrimaryButtonState();
+}
+
+class _PaperPrimaryButtonState extends State<_PaperPrimaryButton> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+    final theme = Theme.of(context);
+    final ink = theme.colorScheme.onSurface.withValues(alpha: 0.72);
+
+    return Semantics(
+      button: true,
+      label: widget.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onPressed,
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _setPressed(false),
+        onTapCancel: () => _setPressed(false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 90),
+          curve: Curves.easeOut,
+          height: 62,
+          width: double.infinity,
+          transform: Matrix4.translationValues(
+            _pressed ? 4 : 0,
+            _pressed ? 4 : 0,
+            0,
+          ),
+          decoration: BoxDecoration(
+            color: tokens.accentAlt,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: ink, width: 1.5),
+            boxShadow: _pressed
+                ? const []
+                : [
+                    BoxShadow(
+                      color: ink,
+                      blurRadius: 0,
+                      offset: const Offset(4, 4),
                     ),
                   ],
+          ),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.label,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF081122),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Color(0xFF081122),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MarkerAccentText extends StatelessWidget {
+  const _MarkerAccentText({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+    final theme = Theme.of(context);
+
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      children: [
+        Positioned(
+          left: 2,
+          right: 2,
+          bottom: 4,
+          height: 16,
+          child: CustomPaint(
+            painter: _MarkerHighlightPainter(
+              color: tokens.accentAlt.withValues(alpha: 0.3),
+            ),
+          ),
+        ),
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: tokens.accentAlt,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -253,14 +368,7 @@ class _OnboardingPage extends StatelessWidget {
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Text(
-                  data.titleAccent,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: tokens.accentAlt,
-                  ),
-                ),
+                _MarkerAccentText(text: data.titleAccent),
                 const SizedBox(height: 12),
                 Text(
                   data.description,
@@ -269,6 +377,16 @@ class _OnboardingPage extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                     color: tokens.textMuted,
                     height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'By H7Z man',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: tokens.textMuted.withValues(alpha: 0.62),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
                   ),
                 ),
               ],
@@ -294,6 +412,11 @@ class _OnboardingIllustration extends StatelessWidget {
     final panelSize = isCompact ? 232.0 : 292.0;
     final glowSize = isCompact ? 260.0 : 320.0;
     final panelPadding = isCompact ? 12.0 : 18.0;
+    final rotation = switch (mood) {
+      _OnboardingMood.coeff => -0.012,
+      _OnboardingMood.modules => 0.01,
+      _OnboardingMood.progress => -0.006,
+    };
 
     return Stack(
       alignment: Alignment.center,
@@ -312,22 +435,11 @@ class _OnboardingIllustration extends StatelessWidget {
             ),
           ),
         ),
-        Container(
+        _PaperCard(
           width: panelSize,
           height: panelSize,
           padding: EdgeInsets.all(panelPadding),
-          decoration: BoxDecoration(
-            color: tokens.card,
-            borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: tokens.accentAlt.withValues(alpha: 0.25)),
-            boxShadow: [
-              BoxShadow(
-                color: tokens.shadow.withValues(alpha: 0.32),
-                blurRadius: 34,
-                offset: const Offset(0, 16),
-              ),
-            ],
-          ),
+          rotation: rotation,
           child: FittedBox(
             fit: BoxFit.contain,
             child: SizedBox(
@@ -539,6 +651,114 @@ class _OnboardingIllustration extends StatelessWidget {
   }
 }
 
+class _PaperCard extends StatelessWidget {
+  const _PaperCard({
+    required this.width,
+    required this.height,
+    required this.padding,
+    required this.rotation,
+    required this.child,
+  });
+
+  final double width;
+  final double height;
+  final EdgeInsets padding;
+  final double rotation;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+    final theme = Theme.of(context);
+    final edge = theme.colorScheme.onSurface.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.55 : 0.5,
+    );
+    final paperColor = Color.lerp(tokens.card, const Color(0xFFFBF9F4), 0.58)!;
+
+    return Transform.rotate(
+      angle: rotation,
+      child: SizedBox(
+        width: width + 10,
+        height: height + 10,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: 9,
+              top: 9,
+              child: Container(
+                width: width,
+                height: height,
+                decoration: BoxDecoration(
+                  color: edge,
+                  borderRadius: BorderRadius.circular(26),
+                ),
+              ),
+            ),
+            Container(
+              width: width,
+              height: height,
+              padding: padding,
+              decoration: BoxDecoration(
+                color: paperColor,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: edge, width: 1.6),
+                boxShadow: [
+                  BoxShadow(
+                    color: tokens.shadow.withValues(alpha: 0.2),
+                    blurRadius: 18,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _PaperTexturePainter(
+                          color: edge.withValues(alpha: 0.08),
+                          spacing: 18,
+                        ),
+                      ),
+                    ),
+                    child,
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              top: -8,
+              left: width * 0.18,
+              child: Transform.rotate(
+                angle: -0.07,
+                child: Container(
+                  width: 70,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: tokens.accentAlt.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: edge.withValues(alpha: 0.28)),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 18,
+              bottom: 14,
+              child: CustomPaint(
+                size: const Size(36, 22),
+                painter: _DoodleSparkPainter(color: tokens.accentAlt),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MiniRingPainter extends CustomPainter {
   _MiniRingPainter({required this.color, required this.track});
 
@@ -570,6 +790,99 @@ class _MiniRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _MiniRingPainter oldDelegate) {
     return oldDelegate.color != color || oldDelegate.track != track;
+  }
+}
+
+class _PaperTexturePainter extends CustomPainter {
+  const _PaperTexturePainter({required this.color, this.spacing = 24});
+
+  final Color color;
+  final double spacing;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    for (var y = 0.0; y < size.height; y += spacing) {
+      for (var x = 0.0; x < size.width; x += spacing) {
+        final wobble = math.sin(x * 0.31 + y * 0.17) * 1.4;
+        canvas.drawCircle(Offset(x + wobble, y - wobble), 0.65, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _PaperTexturePainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.spacing != spacing;
+  }
+}
+
+class _MarkerHighlightPainter extends CustomPainter {
+  const _MarkerHighlightPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, size.height * 0.42)
+      ..quadraticBezierTo(
+        size.width * 0.28,
+        size.height * 0.12,
+        size.width * 0.52,
+        size.height * 0.34,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.78,
+        size.height * 0.56,
+        size.width,
+        size.height * 0.28,
+      )
+      ..lineTo(size.width, size.height * 0.92)
+      ..quadraticBezierTo(size.width * 0.52, size.height, 0, size.height * 0.86)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MarkerHighlightPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
+class _DoodleSparkPainter extends CustomPainter {
+  const _DoodleSparkPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.45)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(size.width * 0.1, size.height * 0.5),
+      Offset(size.width * 0.36, size.height * 0.5),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.66, size.height * 0.2),
+      Offset(size.width * 0.88, size.height * 0.02),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.66, size.height * 0.8),
+      Offset(size.width * 0.9, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _DoodleSparkPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 

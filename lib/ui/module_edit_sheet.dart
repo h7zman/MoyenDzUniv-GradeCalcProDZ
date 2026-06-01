@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/grade_models.dart';
+import '../services/grade_insights.dart';
 import '../theme/app_theme.dart';
+import '../utils/grade_formatters.dart';
 import 'widgets/segmented_tab_control.dart';
 
 class ModuleEditSheet extends StatefulWidget {
-  const ModuleEditSheet({super.key, this.module, required this.onSave});
+  const ModuleEditSheet({
+    super.key,
+    this.module,
+    required this.systemType,
+    required this.onSave,
+  });
 
   final Module? module;
+  final UniversitySystemType systemType;
   final ValueChanged<Module> onSave;
 
   @override
@@ -21,6 +30,8 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
   late final TextEditingController _tdController;
   late final TextEditingController _tpController;
   late final TextEditingController _examController;
+  late final TextEditingController _rattrapageController;
+  late final TextEditingController _creditsController;
   late final TextEditingController _examPercentController;
   late final TextEditingController _ccPercentController;
 
@@ -44,6 +55,10 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
     _tdController = TextEditingController(text: module?.td ?? '');
     _tpController = TextEditingController(text: module?.tp ?? '');
     _examController = TextEditingController(text: module?.exam ?? '');
+    _rattrapageController = TextEditingController(
+      text: module?.rattrapage ?? '',
+    );
+    _creditsController = TextEditingController(text: module?.credits ?? '0');
 
     _examPercent = module?.examPercentage ?? 60;
     _ccPercent = module?.ccPercentage ?? 40;
@@ -63,6 +78,8 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
       _tdController,
       _tpController,
       _examController,
+      _rattrapageController,
+      _creditsController,
       _examPercentController,
       _ccPercentController,
     ]) {
@@ -78,6 +95,8 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
       _tdController,
       _tpController,
       _examController,
+      _rattrapageController,
+      _creditsController,
       _examPercentController,
       _ccPercentController,
     ]) {
@@ -91,7 +110,20 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
     if (mounted) setState(() {});
   }
 
+  bool get _isLmd => widget.systemType == UniversitySystemType.lmd;
+
+  bool get _isRattrapageAvailable {
+    final originalCalc = ModuleCalc.fromModule(
+      _buildModule(includeRattrapage: false),
+    );
+    return originalCalc.finalGrade != null && originalCalc.finalGrade! < 10;
+  }
+
   Module _draftModule() {
+    return _buildModule(includeRattrapage: _isRattrapageAvailable);
+  }
+
+  Module _buildModule({required bool includeRattrapage}) {
     return Module(
       id: widget.module?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
       name: _nameController.text.trim().isEmpty
@@ -104,6 +136,11 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
       examPercentage: _examPercent,
       ccPercentage: _ccPercent,
       splitMode: _splitMode,
+      credits: _isLmd ? _creditsController.text.trim() : '0',
+      rattrapage: includeRattrapage ? _rattrapageController.text.trim() : '',
+      unitId: 'ue_default',
+      unitName: 'General UE',
+      unitType: TeachingUnitType.fundamental,
       isLocked: widget.module?.isLocked ?? false,
       isCollapsed: widget.module?.isCollapsed ?? false,
     );
@@ -169,10 +206,12 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
   Widget build(BuildContext context) {
     final tokens = AppThemeTokens.of(context);
     final theme = Theme.of(context);
+    final text = AppText.of(context);
     final calc = _calc;
+    final showRattrapage = _isRattrapageAvailable;
     final avgText = calc.finalGrade == null
         ? '--'
-        : _formatGrade(calc.finalGrade!);
+        : formatGrade(calc.finalGrade!);
     final splitIndex = _splitMode == '60_40'
         ? 0
         : _splitMode == '50_50'
@@ -187,7 +226,7 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Module Score Entry',
+          text.moduleScoreEntry,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -200,6 +239,8 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                addAutomaticKeepAlives: true,
+                addRepaintBoundaries: true,
                 children: [
                   _ModuleFormCard(
                     nameController: _nameController,
@@ -207,6 +248,8 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
                     tdController: _tdController,
                     tpController: _tpController,
                     examController: _examController,
+                    rattrapageController: _rattrapageController,
+                    creditsController: _creditsController,
                     examPercent: _examPercent,
                     ccPercent: _ccPercent,
                     splitMode: _splitMode,
@@ -215,6 +258,8 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
                     ccPercentController: _ccPercentController,
                     decimalFormatter: _decimalFormatter,
                     isLocked: _isLocked,
+                    showCredits: _isLmd,
+                    showRattrapage: showRattrapage,
                     onSplitChanged: _changeSplitByIndex,
                     onCustomExamChanged: _onCustomExamChanged,
                     onCustomCcChanged: _onCustomCcChanged,
@@ -225,6 +270,13 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
                     coeffText: _coeffController.text,
                     examPercent: _examPercent,
                     ccPercent: _ccPercent,
+                  ),
+                  const SizedBox(height: 12),
+                  _PassTargetSection(
+                    requirement: GradeInsights.passRequirement(
+                      _draftModule(),
+                      text: text,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _HowItWorksSection(
@@ -261,11 +313,6 @@ class _ModuleEditSheetState extends State<ModuleEditSheet> {
       ),
     );
   }
-
-  String _formatGrade(double value) {
-    final one = value.toStringAsFixed(1);
-    return one.endsWith('.0') ? one.substring(0, one.length - 2) : one;
-  }
 }
 
 class _ModuleFormCard extends StatelessWidget {
@@ -275,6 +322,8 @@ class _ModuleFormCard extends StatelessWidget {
     required this.tdController,
     required this.tpController,
     required this.examController,
+    required this.rattrapageController,
+    required this.creditsController,
     required this.examPercent,
     required this.ccPercent,
     required this.splitMode,
@@ -283,6 +332,8 @@ class _ModuleFormCard extends StatelessWidget {
     required this.ccPercentController,
     required this.decimalFormatter,
     required this.isLocked,
+    required this.showCredits,
+    required this.showRattrapage,
     required this.onSplitChanged,
     required this.onCustomExamChanged,
     required this.onCustomCcChanged,
@@ -293,6 +344,8 @@ class _ModuleFormCard extends StatelessWidget {
   final TextEditingController tdController;
   final TextEditingController tpController;
   final TextEditingController examController;
+  final TextEditingController rattrapageController;
+  final TextEditingController creditsController;
   final int examPercent;
   final int ccPercent;
   final String splitMode;
@@ -301,6 +354,8 @@ class _ModuleFormCard extends StatelessWidget {
   final TextEditingController ccPercentController;
   final TextInputFormatter decimalFormatter;
   final bool isLocked;
+  final bool showCredits;
+  final bool showRattrapage;
   final ValueChanged<int> onSplitChanged;
   final ValueChanged<String> onCustomExamChanged;
   final ValueChanged<String> onCustomCcChanged;
@@ -309,6 +364,7 @@ class _ModuleFormCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = AppThemeTokens.of(context);
     final theme = Theme.of(context);
+    final text = AppText.of(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
@@ -342,7 +398,7 @@ class _ModuleFormCard extends StatelessWidget {
                     focusedBorder: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
-                    hintText: 'Module name',
+                    hintText: text.moduleNameHint,
                     hintStyle: theme.textTheme.headlineSmall?.copyWith(
                       color: tokens.textMuted,
                     ),
@@ -365,7 +421,7 @@ class _ModuleFormCard extends StatelessWidget {
                       Icon(Icons.lock_rounded, color: tokens.danger, size: 16),
                       const SizedBox(width: 6),
                       Text(
-                        'Locked',
+                        text.locked,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: tokens.danger,
                           fontWeight: FontWeight.w700,
@@ -382,23 +438,32 @@ class _ModuleFormCard extends StatelessWidget {
             tdController: tdController,
             tpController: tpController,
             examController: examController,
+            rattrapageController: rattrapageController,
+            creditsController: creditsController,
             examPercent: examPercent,
             ccPercent: ccPercent,
             numberFormatter: decimalFormatter,
             isLocked: isLocked,
+            showCredits: showCredits,
+            showRattrapage: showRattrapage,
           ),
+          const SizedBox(height: 10),
+          const _TdTpNote(),
           const SizedBox(height: 16),
           Text(
-            'Weighting/Split',
+            text.weightingSplit,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          SegmentedTabControl(
-            tabs: const ['60/40', '50/50', 'Custom'],
-            selectedIndex: splitIndex,
-            onChanged: isLocked ? (_) {} : onSplitChanged,
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: SegmentedTabControl(
+              tabs: ['60/40', '50/50', text.custom],
+              selectedIndex: splitIndex,
+              onChanged: isLocked ? (_) {} : onSplitChanged,
+            ),
           ),
           if (splitMode == 'custom') ...[
             const SizedBox(height: 10),
@@ -406,7 +471,7 @@ class _ModuleFormCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _PercentField(
-                    label: 'Exam %',
+                    label: text.examPercent,
                     controller: examPercentController,
                     enabled: !isLocked,
                     onChanged: onCustomExamChanged,
@@ -415,7 +480,7 @@ class _ModuleFormCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _PercentField(
-                    label: 'CC %',
+                    label: text.ccPercent,
                     controller: ccPercentController,
                     enabled: !isLocked,
                     onChanged: onCustomCcChanged,
@@ -430,29 +495,89 @@ class _ModuleFormCard extends StatelessWidget {
   }
 }
 
+class _TdTpNote extends StatelessWidget {
+  const _TdTpNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+    final theme = Theme.of(context);
+    final text = AppText.of(context);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: tokens.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: tokens.accent.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, size: 18, color: tokens.accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text.tdTpNoteTitle,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: tokens.accent,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  text.tdTpNoteBody,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: tokens.textMuted,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _InputGrid extends StatelessWidget {
   const _InputGrid({
     required this.coeffController,
     required this.tdController,
     required this.tpController,
     required this.examController,
+    required this.rattrapageController,
+    required this.creditsController,
     required this.examPercent,
     required this.ccPercent,
     required this.numberFormatter,
     required this.isLocked,
+    required this.showCredits,
+    required this.showRattrapage,
   });
 
   final TextEditingController coeffController;
   final TextEditingController tdController;
   final TextEditingController tpController;
   final TextEditingController examController;
+  final TextEditingController rattrapageController;
+  final TextEditingController creditsController;
   final int examPercent;
   final int ccPercent;
   final TextInputFormatter numberFormatter;
   final bool isLocked;
+  final bool showCredits;
+  final bool showRattrapage;
 
   @override
   Widget build(BuildContext context) {
+    final text = AppText.of(context);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final twoCols = constraints.maxWidth >= 290;
@@ -467,7 +592,7 @@ class _InputGrid extends StatelessWidget {
             SizedBox(
               width: itemWidth,
               child: _InputCell(
-                label: 'Coeff (1.0)',
+                label: text.coeffInputLabel,
                 controller: coeffController,
                 formatter: numberFormatter,
                 enabled: !isLocked,
@@ -476,7 +601,7 @@ class _InputGrid extends StatelessWidget {
             SizedBox(
               width: itemWidth,
               child: _InputCell(
-                label: 'TD (${(ccPercent / 2).round()}%)',
+                label: text.tdPercentLabel((ccPercent / 2).round()),
                 controller: tdController,
                 formatter: numberFormatter,
                 enabled: !isLocked,
@@ -485,7 +610,7 @@ class _InputGrid extends StatelessWidget {
             SizedBox(
               width: itemWidth,
               child: _InputCell(
-                label: 'TP (${(ccPercent / 2).round()}%)',
+                label: text.tpPercentLabel((ccPercent / 2).round()),
                 controller: tpController,
                 formatter: numberFormatter,
                 enabled: !isLocked,
@@ -494,12 +619,32 @@ class _InputGrid extends StatelessWidget {
             SizedBox(
               width: itemWidth,
               child: _InputCell(
-                label: 'Exam ($examPercent%)',
+                label: text.examInputLabel(examPercent),
                 controller: examController,
                 formatter: numberFormatter,
                 enabled: !isLocked,
               ),
             ),
+            if (showRattrapage)
+              SizedBox(
+                width: itemWidth,
+                child: _InputCell(
+                  label: 'Rattrapage',
+                  controller: rattrapageController,
+                  formatter: numberFormatter,
+                  enabled: !isLocked,
+                ),
+              ),
+            if (showCredits)
+              SizedBox(
+                width: itemWidth,
+                child: _InputCell(
+                  label: 'Credits',
+                  controller: creditsController,
+                  formatter: numberFormatter,
+                  enabled: !isLocked,
+                ),
+              ),
           ],
         );
       },
@@ -624,6 +769,7 @@ class _CalculatorSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = AppThemeTokens.of(context);
     final theme = Theme.of(context);
+    final text = AppText.of(context);
 
     final coeff = double.tryParse(coeffText.replaceAll(',', '.'));
     final weighted = (calc.finalGrade != null && coeff != null && coeff > 0)
@@ -641,14 +787,14 @@ class _CalculatorSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Calculator',
+            text.calculator,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Live calculation using Exam $examPercent% and CC $ccPercent%',
+            text.liveCalculation(examPercent, ccPercent),
             style: theme.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
           ),
           const SizedBox(height: 10),
@@ -656,14 +802,14 @@ class _CalculatorSection extends StatelessWidget {
             children: [
               Expanded(
                 child: _MiniMetric(
-                  label: 'CC',
+                  label: text.cc,
                   value: calc.cc == null ? '--' : _fmt(calc.cc!),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _MiniMetric(
-                  label: 'Module Avg',
+                  label: text.moduleAverage,
                   value: calc.finalGrade == null
                       ? '--'
                       : _fmt(calc.finalGrade!),
@@ -672,7 +818,7 @@ class _CalculatorSection extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _MiniMetric(
-                  label: 'Avg × Coeff',
+                  label: text.weightedAverage,
                   value: weighted == null ? '--' : _fmt(weighted),
                 ),
               ),
@@ -736,6 +882,63 @@ class _MiniMetric extends StatelessWidget {
   }
 }
 
+class _PassTargetSection extends StatelessWidget {
+  const _PassTargetSection({required this.requirement});
+
+  final PassRequirement requirement;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+    final theme = Theme.of(context);
+    final color = switch (requirement.status) {
+      PassRequirementStatus.passed => tokens.success,
+      PassRequirementStatus.actionable => tokens.accent,
+      PassRequirementStatus.needsImprovement => tokens.danger,
+      PassRequirementStatus.impossible => tokens.danger,
+      PassRequirementStatus.blocked => tokens.textMuted,
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.flag_rounded, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  requirement.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  requirement.detail,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: tokens.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HowItWorksSection extends StatelessWidget {
   const _HowItWorksSection({
     required this.examPercent,
@@ -749,6 +952,7 @@ class _HowItWorksSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = AppThemeTokens.of(context);
     final theme = Theme.of(context);
+    final text = AppText.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -760,26 +964,19 @@ class _HowItWorksSection extends StatelessWidget {
         tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
         title: Text(
-          'How it works',
+          text.howItWorks,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
           ),
         ),
         subtitle: Text(
-          'See the exact calculation formula',
+          text.exactFormula,
           style: theme.textTheme.bodySmall?.copyWith(color: tokens.textMuted),
         ),
         children: [
-          _FormulaLine(
-            text: '1) CC = (TD + TP) / 2  (or TD / TP if only one exists).',
-          ),
-          _FormulaLine(
-            text:
-                '2) Module average = Exam × $examPercent% + CC × $ccPercent% (percentages ÷ 100).',
-          ),
-          const _FormulaLine(
-            text: '3) Semester average = Σ(Module average × Coeff) ÷ Σ(Coeff).',
-          ),
+          _FormulaLine(text: text.formulaCc),
+          _FormulaLine(text: text.formulaModuleAverage(examPercent, ccPercent)),
+          _FormulaLine(text: text.formulaSemesterAverage),
         ],
       ),
     );
@@ -825,6 +1022,7 @@ class _BottomActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = AppThemeTokens.of(context);
     final theme = Theme.of(context);
+    final text = AppText.of(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
@@ -859,7 +1057,7 @@ class _BottomActionBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Average',
+                    text.average,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: tokens.accent,
                       fontWeight: FontWeight.w700,
@@ -896,7 +1094,7 @@ class _BottomActionBar extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        isLocked ? 'Locked Module' : 'Save Module',
+                        isLocked ? text.lockedModule : text.saveModule,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: theme.colorScheme.onPrimary,

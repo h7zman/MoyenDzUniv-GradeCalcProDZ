@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gradecalcprodz/l10n/app_localizations.dart';
 import 'package:gradecalcprodz/theme/app_theme.dart';
 
 class CalculatorPage extends StatefulWidget {
@@ -17,6 +18,14 @@ class _CalculatorPageState extends State<CalculatorPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _tdController.dispose();
+    _tpController.dispose();
+    _examController.dispose();
+    super.dispose();
+  }
 
   void _calculate() {
     final td = double.tryParse(_tdController.text);
@@ -49,20 +58,23 @@ class _CalculatorPageState extends State<CalculatorPage>
     super.build(context);
     final tokens = AppThemeTokens.of(context);
     final theme = Theme.of(context);
+    final text = AppText.of(context);
 
     // Reuse styling from the app theme
     return ListView(
       padding: const EdgeInsets.all(24),
+      addAutomaticKeepAlives: true,
+      addRepaintBoundaries: true,
       children: [
         Text(
-          'Quick Calculator',
+          text.quickCalculator,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Calculate a module grade instantly (60% Exam / 40% CC).',
+          text.quickCalculatorSubtitle,
           style: theme.textTheme.bodyMedium?.copyWith(color: tokens.textMuted),
         ),
         const SizedBox(height: 24),
@@ -84,21 +96,23 @@ class _CalculatorPageState extends State<CalculatorPage>
               TextField(
                 controller: _tdController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'TD Score'),
+                decoration: InputDecoration(labelText: text.tdScore),
                 onChanged: (_) => _calculate(),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _tpController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'TP Score'),
+                decoration: InputDecoration(labelText: text.tpScore),
                 onChanged: (_) => _calculate(),
               ),
+              const SizedBox(height: 10),
+              _TdTpNote(text: text),
               const SizedBox(height: 16),
               TextField(
                 controller: _examController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Exam Score'),
+                decoration: InputDecoration(labelText: text.examScore),
                 onChanged: (_) => _calculate(),
               ),
               const SizedBox(height: 24),
@@ -106,7 +120,7 @@ class _CalculatorPageState extends State<CalculatorPage>
                 Divider(color: tokens.fieldBorder),
                 const SizedBox(height: 16),
                 Text(
-                  'Result',
+                  text.result,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: tokens.textMuted,
                   ),
@@ -123,6 +137,36 @@ class _CalculatorPageState extends State<CalculatorPage>
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TdTpNote extends StatelessWidget {
+  const _TdTpNote({required this.text});
+
+  final AppText text;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tokens.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: tokens.accent.withValues(alpha: 0.18)),
+      ),
+      child: Text(
+        '${text.tdTpNoteTitle}: ${text.tdTpNoteBody}',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: tokens.textMuted,
+          fontWeight: FontWeight.w600,
+          height: 1.35,
+        ),
+      ),
     );
   }
 }

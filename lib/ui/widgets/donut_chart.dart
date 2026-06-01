@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../utils/grade_formatters.dart';
 
 class DonutChart extends StatefulWidget {
   const DonutChart({
@@ -82,9 +83,10 @@ class _DonutChartState extends State<DonutChart>
         animation: _curve,
         builder: (context, _) {
           final progress = _currentProgress.clamp(0.0, 1.0).toDouble();
-          final currentScore = progress * safeMax;
-          final scoreText = _formatValue(currentScore);
-          final maxText = _formatValue(safeMax);
+          final scoreText = formatGrade(
+            widget.score.clamp(0, safeMax).toDouble(),
+          );
+          final maxText = formatGrade(safeMax);
 
           return Stack(
             fit: StackFit.expand,
@@ -99,37 +101,46 @@ class _DonutChartState extends State<DonutChart>
                 ),
               ),
               Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'AVERAGE:',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: tokens.textMuted,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    RichText(
-                      text: TextSpan(
-                        text: scoreText,
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: primaryText,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: '/$maxText',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: secondaryText,
-                            ),
+                child: Padding(
+                  padding: EdgeInsets.all(widget.thickness + 6),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'AVERAGE:',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: tokens.textMuted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: TextSpan(
+                            text: scoreText,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: primaryText,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: '/$maxText',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -137,11 +148,6 @@ class _DonutChartState extends State<DonutChart>
         },
       ),
     );
-  }
-
-  String _formatValue(double value) {
-    final one = value.toStringAsFixed(1);
-    return one.endsWith('.0') ? one.substring(0, one.length - 2) : one;
   }
 }
 

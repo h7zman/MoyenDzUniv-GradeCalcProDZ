@@ -85,6 +85,8 @@ class _SegmentedTabControlState extends State<SegmentedTabControl> {
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           itemCount: widget.tabs.length,
+          addAutomaticKeepAlives: true,
+          addRepaintBoundaries: true,
           separatorBuilder: (_, _) => const SizedBox(width: 4),
           itemBuilder: (context, index) {
             final selected = index == safeIndex;
@@ -128,9 +130,7 @@ class _SegmentedTabControlState extends State<SegmentedTabControl> {
                       color: selected
                           ? theme.colorScheme.onPrimary
                           : tokens.textMuted,
-                      fontWeight: selected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                     child: Text(
                       widget.tabs[index],
