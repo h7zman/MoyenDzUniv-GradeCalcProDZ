@@ -22,8 +22,8 @@ or from releases .
 
 <table>
   <tr>
-    <td><img src="(https://github.com/user-attachments/assets/f0ab95d6-f527-4eb4-8f36-a4de27a0ea05)" width="220"></td>
-    <td><img src="(https://github.com/user-attachments/assets/6dfada71-e5f4-4df1-b5ba-234f801cf620)" width="220"></td>
+    <td><img src="https://github.com/user-attachments/assets/f0ab95d6-f527-4eb4-8f36-a4de27a0ea05" width="220"></td>
+    <td><img src="https://github.com/user-attachments/assets/6dfada71-e5f4-4df1-b5ba-234f801cf620" width="220"></td>
     <td><img src="https://github.com/user-attachments/assets/6f7f5a05-a670-4eb4-b197-fb06c0e817b3" width="220"></td>
   </tr>
   <tr>
