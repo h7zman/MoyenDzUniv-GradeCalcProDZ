@@ -1,6 +1,6 @@
 # GradeCalcDZ
 
-GradeCalcDZ is a Flutter application for semester and module grade calculation.
+GradeCalcDZ is a Flutter application designed to calculate university averages (moyenne) for Algerian students.
 
 ## Project Ownership
 
