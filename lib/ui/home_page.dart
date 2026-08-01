@@ -1079,7 +1079,7 @@ class _HomePageState extends State<HomePage> {
               onPressed: selectedSemester == null
                   ? null
                   : () => _openModuleEditor(context, state, selectedSemester),
-              icon: const Icon(FontAwesomeIcons.plus, size: 18),
+              icon: const FaIcon(FontAwesomeIcons.plus, size: 18),
               label: Text(text.addModule),
             ),
           ),
@@ -1566,7 +1566,7 @@ class _SemesterModulesViewState extends State<_SemesterModulesView>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            FaIcon(
               FontAwesomeIcons.boxOpen,
               color: tokens.textMuted.withValues(alpha: 0.6),
             ),
